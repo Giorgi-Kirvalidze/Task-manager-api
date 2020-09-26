@@ -5,22 +5,10 @@ const jwt = require('jsonwebtoken')
 const Task = require('./task')
 
 const userSchema = new mongoose.Schema({
-
     name: {
         type: String,
         required: true,
         trim: true
-    },
-    password: {
-        type: String,
-        required: true,
-        minlength: 7,
-        trim: true,
-        validate(value) {
-            if (value.toLowerCase().includes('password')) {
-                throw new Error('password cant contain password')
-            }
-        }
     },
     email: {
         type: String,
@@ -34,12 +22,23 @@ const userSchema = new mongoose.Schema({
             }
         }
     },
+    password: {
+        type: String,
+        required: true,
+        minlength: 7,
+        trim: true,
+        validate(value) {
+            if (value.toLowerCase().includes('password')) {
+                throw new Error('Password cannot contain "password"')
+            }
+        }
+    },
     age: {
         type: Number,
         default: 0,
         validate(value) {
             if (value < 0) {
-                throw new Error('Age must be positive number')
+                throw new Error('Age must be a postive number')
             }
         }
     },
@@ -79,6 +78,7 @@ userSchema.methods.generateAuthToken = async function () {
 
     user.tokens = user.tokens.concat({ token })
     await user.save()
+
     return token
 }
 
@@ -109,8 +109,7 @@ userSchema.pre('save', async function (next) {
     next()
 })
 
-//Delete user task when user is removed
-
+// Delete user tasks when user is removed
 userSchema.pre('remove', async function (next) {
     const user = this
     await Task.deleteMany({ owner: user._id })
@@ -118,5 +117,5 @@ userSchema.pre('remove', async function (next) {
 })
 
 const User = mongoose.model('User', userSchema)
-User.createIndexes();
+
 module.exports = User
